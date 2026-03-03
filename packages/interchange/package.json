@@ -1,0 +1,40 @@
+{
+  "name": "interchange",
+  "version": "0.1.0",
+  "description": "Multi-model agent orchestrator with intelligent routing and context translation",
+  "type": "module",
+  "bin": {
+    "interchange": "./dist/cli.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@interchange/core": "*",
+    "ai": "^4.0.0",
+    "@ai-sdk/anthropic": "^1.0.0",
+    "@ai-sdk/openai": "^1.0.0",
+    "zod": "^3.23.0",
+    "commander": "^12.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.5.0",
+    "vitest": "^2.0.0"
+  },
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}

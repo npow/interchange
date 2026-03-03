@@ -1,0 +1,13 @@
+node_modules/
+dist/
+.env
+.env.local
+*.log
+coverage/
+.cache/
+
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.pytest_cache/
