@@ -20,8 +20,8 @@ jobs:
       - run: npm ci
       - run: npm run build --workspaces --if-present
       - name: Publish @npow/interchange-core
-        run: unset NODE_AUTH_TOKEN && npm publish --access public
+        run: npm config delete //registry.npmjs.org/:_authToken && npm publish --access public
         working-directory: packages/core
       - name: Publish @npow/interchange
-        run: unset NODE_AUTH_TOKEN && npm publish --access public
+        run: npm config delete //registry.npmjs.org/:_authToken && npm publish --access public
         working-directory: packages/interchange
