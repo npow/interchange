@@ -19,11 +19,15 @@ jobs:
       - run: npm install -g npm@latest
       - run: npm ci
       - run: npm run build --workspaces --if-present
-      - name: Remove auth token to allow OIDC publishing
-        run: sed -i '/^\/\/registry.npmjs.org\/:_authToken/d' "$NPM_CONFIG_USERCONFIG"
       - name: Publish @npow/interchange-core
-        run: npm publish --provenance --access public
+        run: |
+          sed -i '/^\/\/registry.npmjs.org\/:_authToken/d' "$NPM_CONFIG_USERCONFIG"
+          unset NODE_AUTH_TOKEN
+          npm publish --provenance --access public
         working-directory: packages/core
       - name: Publish @npow/interchange
-        run: npm publish --provenance --access public
+        run: |
+          sed -i '/^\/\/registry.npmjs.org\/:_authToken/d' "$NPM_CONFIG_USERCONFIG"
+          unset NODE_AUTH_TOKEN
+          npm publish --provenance --access public
         working-directory: packages/interchange
