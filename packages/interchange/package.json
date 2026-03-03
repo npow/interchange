@@ -1,6 +1,6 @@
 {
   "name": "@npow/interchange",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "description": "Multi-model agent orchestrator with intelligent routing and context translation",
   "type": "module",
   "bin": {
