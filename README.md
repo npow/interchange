@@ -1,6 +1,6 @@
 # agent-subsystems
 
-[![CI](https://github.com/npow/agent-subsystems/actions/workflows/ci.yml/badge.svg)](https://github.com/npow/agent-subsystems/actions/workflows/ci.yml)
+[![CI](https://github.com/npow/interchange/actions/workflows/ci.yml/badge.svg)](https://github.com/npow/interchange/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/interchange)](https://www.npmjs.com/package/interchange)
 [![npm](https://img.shields.io/npm/v/%40interchange%2Fcore)](https://www.npmjs.com/package/@interchange/core)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
@@ -88,7 +88,7 @@ Pass `--max-cost <usd-per-1k>` to `run` / `run-as` to cap model selection by cos
 ## Development
 
 ```bash
-git clone https://github.com/npow/agent-subsystems
+git clone https://github.com/npow/interchange
 cd agent-subsystems
 npm install
 npm run build --workspaces
