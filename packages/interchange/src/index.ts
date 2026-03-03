@@ -18,5 +18,5 @@ export { startMcpServer } from "./mcp.js";
 
 export { resolveModel } from "./models.js";
 
-// Re-export everything from @interchange/core for convenience
-export * from "@interchange/core";
+// Re-export everything from @npow/interchange-core for convenience
+export * from "@npow/interchange-core";

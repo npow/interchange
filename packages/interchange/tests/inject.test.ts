@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { formatBatonForAgent, parseBatonFromOutput } from "../src/inject.js";
-import { makeBaton } from "@interchange/core";
+import { makeBaton } from "@npow/interchange-core";
 
 function sampleBaton() {
   return makeBaton({

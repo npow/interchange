@@ -15,7 +15,7 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-import { JSONFileBackend, StateManager, makeBaton } from "@interchange/core";
+import { JSONFileBackend, StateManager, makeBaton } from "@npow/interchange-core";
 import { formatBatonForAgent, type AgentTarget } from "./inject.js";
 import { getStateFile } from "./hooks.js";
 

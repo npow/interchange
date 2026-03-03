@@ -4,7 +4,7 @@
  * Each agent tool has its own preferred context format. This module
  * translates the structured baton into the right shape for the target.
  */
-import type { Baton } from "@interchange/core";
+import type { Baton } from "@npow/interchange-core";
 
 export type AgentTarget = "claude" | "codex" | "gemini" | "amp" | "generic";
 

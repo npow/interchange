@@ -12,8 +12,8 @@
  */
 import { Command } from "commander";
 import { existsSync, mkdirSync } from "fs";
-import { JSONFileBackend, StateManager } from "@interchange/core";
-import type { StopEvent } from "@interchange/core";
+import { JSONFileBackend, StateManager } from "@npow/interchange-core";
+import type { StopEvent } from "@npow/interchange-core";
 import { getStateDir, getStateFile, handleStopHook } from "./hooks.js";
 import { formatBatonForAgent, type AgentTarget } from "./inject.js";
 import { startMcpServer } from "./mcp.js";

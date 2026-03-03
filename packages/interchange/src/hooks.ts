@@ -16,8 +16,8 @@
  */
 import { readFileSync, existsSync, mkdirSync } from "fs";
 import { join } from "path";
-import { JSONFileBackend, StateManager } from "@interchange/core";
-import type { StopEvent, ClaudeRecord } from "@interchange/core";
+import { JSONFileBackend, StateManager } from "@npow/interchange-core";
+import type { StopEvent, ClaudeRecord } from "@npow/interchange-core";
 import { distillSession } from "./distill.js";
 
 export function getStateDir(projectDir: string): string {

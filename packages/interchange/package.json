@@ -28,7 +28,7 @@
   "dependencies": {
     "@ai-sdk/anthropic": "^1.0.0",
     "@ai-sdk/openai": "^1.0.0",
-    "@interchange/core": "*",
+    "@npow/interchange-core": "*",
     "@modelcontextprotocol/sdk": "^1.27.1",
     "ai": "^4.0.0",
     "commander": "^12.1.0",

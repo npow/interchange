@@ -4,7 +4,7 @@ import { join } from "path";
 import { tmpdir } from "os";
 import { randomBytes } from "crypto";
 import { getStateDir, getStateFile, handleStopHook } from "../src/hooks.js";
-import type { StopEvent } from "@interchange/core";
+import type { StopEvent } from "@npow/interchange-core";
 
 // Mock distillSession so tests don't make real LLM calls
 vi.mock("../src/distill.js", () => ({
@@ -12,7 +12,7 @@ vi.mock("../src/distill.js", () => ({
 }));
 
 import { distillSession } from "../src/distill.js";
-import { makeBaton, JSONFileBackend, StateManager } from "@interchange/core";
+import { makeBaton, JSONFileBackend, StateManager } from "@npow/interchange-core";
 
 const mockDistill = vi.mocked(distillSession);
 

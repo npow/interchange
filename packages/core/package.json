@@ -1,5 +1,5 @@
 {
-  "name": "@interchange/core",
+  "name": "@npow/interchange-core",
   "version": "0.1.3",
   "description": "Canonical types, format adapters, and state management for multi-model agent interchange",
   "type": "module",

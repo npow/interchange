@@ -8,8 +8,8 @@
 import { generateObject } from "ai";
 import { z } from "zod";
 import { resolveModel } from "./models.js";
-import { makeBaton } from "@interchange/core";
-import type { ClaudeRecord, Baton } from "@interchange/core";
+import { makeBaton } from "@npow/interchange-core";
+import type { ClaudeRecord, Baton } from "@npow/interchange-core";
 
 export const DISTILL_MODEL =
   process.env.INTERCHANGE_DISTILL_MODEL ?? "claude-haiku-4-5-20251001";

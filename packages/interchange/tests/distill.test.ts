@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { recordsToText, distillSession } from "../src/distill.js";
-import type { ClaudeRecord } from "@interchange/core";
+import type { ClaudeRecord } from "@npow/interchange-core";
 
 // Mock the ai module so tests don't make real LLM calls
 vi.mock("ai", () => ({
