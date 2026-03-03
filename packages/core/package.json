@@ -1,6 +1,6 @@
 {
   "name": "@npow/interchange-core",
-  "version": "0.1.3",
+  "version": "0.1.6",
   "description": "Canonical types, format adapters, and state management for multi-model agent interchange",
   "type": "module",
   "main": "./dist/index.js",
