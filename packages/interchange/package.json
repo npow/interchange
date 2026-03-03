@@ -1,6 +1,6 @@
 {
   "name": "interchange",
-  "version": "0.1.0",
+  "version": "0.1.3",
   "description": "Multi-model agent orchestrator with intelligent routing and context translation",
   "type": "module",
   "bin": {
@@ -14,6 +14,11 @@
       "types": "./dist/index.d.ts"
     }
   },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsc",
     "test": "vitest run",
