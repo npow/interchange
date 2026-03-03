@@ -166,7 +166,13 @@ export interface DroppedItem {
   summary: string;
 }
 
-// ─── Interchange orchestrator types ──────────────────────────────────────────
+// ─── Interchange handoff types ────────────────────────────────────────────────
+
+/** A decision made during a session, with rationale. */
+export interface BatonDecision {
+  what: string;
+  why: string;
+}
 
 /** Canonical, model-agnostic tool call record stored in WorldState. */
 export interface ToolCall {
@@ -190,7 +196,12 @@ export interface Baton {
   fromModel: string;
   toRole: string;
   facts: Record<string, unknown>;
+  /** Explicit decisions made with their rationale — do not re-litigate these. */
+  decisions: BatonDecision[];
+  /** Approaches tried during this session that did not work and why. */
+  triedAndRejected: BatonDecision[];
   openQuestions: string[];
+  nextSteps: string[];
   recommendation: string;
   status: "complete" | "partial" | "blocked";
   toolCallsSummary: string[];
@@ -229,38 +240,3 @@ export interface WorldState {
   version: number; // incremented on each save
 }
 
-/** Defines an agent role: preferred model, fallback, and capabilities. */
-export interface Role {
-  preferredModel: string;
-  fallbackModel: string;
-  capabilities: string[];
-  allowedTools: string[] | null; // null = all registered tools
-}
-
-/** The result of a routing decision. */
-export interface RouteDecision {
-  role: string;
-  model: string;
-  confidence: number; // 0.0–1.0; below 0.5 triggers planner fallback
-  rationale: string;
-}
-
-/** Hard constraints applied during routing. */
-export interface RouteConstraints {
-  maxCostUsdPer1kTokens?: number;
-  maxLatencyMs?: number;
-  preferLocal?: boolean;
-  disallowedModels?: string[];
-}
-
-/** The final result of a completed interchange run. */
-export interface InterchangeResult {
-  taskId: string;
-  output: string;
-  status: "completed" | "failed" | "partial";
-  taskNodes: TaskNode[];
-  batons: Baton[];
-  toolCalls: ToolCall[];
-  totalTokens: number;
-  wallTimeMs: number;
-}

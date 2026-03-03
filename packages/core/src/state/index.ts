@@ -51,11 +51,20 @@ export function makeTaskNode(
   };
 }
 
-export function makeBaton(
-  partial: Omit<Baton, "id" | "createdAt">
-): Baton {
+type BatonInput = Omit<Baton, "id" | "createdAt" | "decisions" | "triedAndRejected" | "nextSteps" | "toolCallsSummary"> & {
+  decisions?: Baton["decisions"];
+  triedAndRejected?: Baton["triedAndRejected"];
+  nextSteps?: Baton["nextSteps"];
+  toolCallsSummary?: Baton["toolCallsSummary"];
+};
+
+export function makeBaton(partial: BatonInput): Baton {
   return {
     ...partial,
+    decisions: partial.decisions ?? [],
+    triedAndRejected: partial.triedAndRejected ?? [],
+    nextSteps: partial.nextSteps ?? [],
+    toolCallsSummary: partial.toolCallsSummary ?? [],
     id: makeId(),
     createdAt: new Date().toISOString(),
   };

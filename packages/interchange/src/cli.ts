@@ -1,136 +1,224 @@
 #!/usr/bin/env node
 /**
- * interchange CLI — run multi-model agent tasks from the terminal.
+ * interchange CLI
  *
  * Commands:
- *   interchange run <task>            Decompose and run a task
- *   interchange run-as <role> <task>  Run a task with a specific role
- *   interchange status <taskId>       Show current state of a task
- *   interchange list                  List all known tasks
+ *   interchange init              Set up .interchange/ for the current project
+ *   interchange status            Show project state (facts, decisions, open questions)
+ *   interchange handoff [target]  Print baton formatted for a target agent
+ *   interchange conflicts         Show detected fact conflicts across sessions
+ *   interchange distill-hook      Internal: Stop hook handler (reads StopEvent from stdin)
+ *   interchange serve             Start MCP server (stdio transport)
  */
 import { Command } from "commander";
-import { Interchange, DEFAULT_ROLES } from "./core.js";
-import { JSONFileBackend } from "@interchange/core";
-import { homedir } from "os";
-import { join } from "path";
-
-const DEFAULT_STATE_PATH = join(homedir(), ".interchange", "state.json");
+import { existsSync, mkdirSync } from "fs";
+import { JSONFileBackend, StateManager } from "@interchange/core";
+import type { StopEvent } from "@interchange/core";
+import { getStateDir, getStateFile, handleStopHook } from "./hooks.js";
+import { formatBatonForAgent, type AgentTarget } from "./inject.js";
+import { startMcpServer } from "./mcp.js";
 
 const program = new Command();
 
 program
   .name("interchange")
-  .description("Multi-model agent orchestrator")
+  .description("Cross-agent episodic memory and session handoff")
   .version("0.1.0");
 
+// ─── init ────────────────────────────────────────────────────────────────────
+
 program
-  .command("run <task>")
-  .description("Decompose and run a task across multiple agents")
-  .option("--state-file <path>", "Path to state file", DEFAULT_STATE_PATH)
-  .option("--max-cost <usd>", "Max cost per 1k tokens (USD)", parseFloat)
-  .option("--no-decompose", "Run as single step (skip decomposition)")
-  .action(async (task: string, opts: { stateFile: string; maxCost?: number }) => {
-    const ix = new Interchange({
-      stateBackend: new JSONFileBackend(opts.stateFile),
-    });
-    const constraints = opts.maxCost
-      ? { maxCostUsdPer1kTokens: opts.maxCost }
-      : undefined;
+  .command("init")
+  .description("Set up .interchange/ for the current project")
+  .option("--dir <path>", "Project directory", process.cwd())
+  .action((opts: { dir: string }) => {
+    const stateDir = getStateDir(opts.dir);
+    if (!existsSync(stateDir)) {
+      mkdirSync(stateDir, { recursive: true });
+      console.log(`Created ${stateDir}`);
+    } else {
+      console.log(`Already initialized: ${stateDir}`);
+    }
+    console.log(`
+To enable automatic distillation, add to ~/.claude/settings.json:
 
-    console.log(`Running task: ${task}`);
-    console.log("Routing across agents...\n");
+  "hooks": {
+    "Stop": [{
+      "matcher": "",
+      "hooks": [{ "type": "command", "command": "interchange distill-hook" }]
+    }]
+  }
 
-    const result = await ix.run(task, constraints);
-    printResult(result);
+To enable in-session state queries, add to Claude Code MCP config:
+
+  "mcpServers": {
+    "interchange": { "command": "interchange", "args": ["serve"] }
+  }
+`);
   });
 
-program
-  .command("run-as <role> <task>")
-  .description("Run a task with a specific role (skips decomposition)")
-  .option("--state-file <path>", "Path to state file", DEFAULT_STATE_PATH)
-  .action(async (role: string, task: string, opts: { stateFile: string }) => {
-    const ix = new Interchange({
-      stateBackend: new JSONFileBackend(opts.stateFile),
-    });
-    console.log(`Running task as role '${role}': ${task}\n`);
-    const result = await ix.runAs(task, role);
-    printResult(result);
-  });
+// ─── status ──────────────────────────────────────────────────────────────────
 
 program
-  .command("status <taskId>")
-  .description("Show the current state of a task")
-  .option("--state-file <path>", "Path to state file", DEFAULT_STATE_PATH)
-  .action(async (taskId: string, opts: { stateFile: string }) => {
-    const ix = new Interchange({
-      stateBackend: new JSONFileBackend(opts.stateFile),
-    });
-    try {
-      const state = ix.getState(taskId);
-      console.log(`Task: ${state.taskId}`);
-      console.log(`Status: ${state.status}`);
-      console.log(`Nodes: ${Object.keys(state.taskNodes).length}`);
-      for (const [id, node] of Object.entries(state.taskNodes)) {
-        console.log(`  ${id} [${node.status}] (${node.role}) — ${node.description}`);
-      }
-      console.log(`\nFacts: ${JSON.stringify(state.facts, null, 2)}`);
-    } catch (err) {
-      console.error(`Task not found: ${taskId}`);
+  .command("status")
+  .description("Show project state (facts, decisions, open questions)")
+  .option("--dir <path>", "Project directory", process.cwd())
+  .action((opts: { dir: string }) => {
+    const stateFile = getStateFile(opts.dir);
+    if (!existsSync(stateFile)) {
+      console.log("No interchange state found. Run `interchange init` first.");
       process.exit(1);
     }
-  });
+    const manager = new StateManager(new JSONFileBackend(stateFile));
+    const sessions = manager.listTasks();
+    if (sessions.length === 0) {
+      console.log("No sessions recorded yet.");
+      return;
+    }
+    for (const id of sessions) {
+      const state = manager.get(id);
+      const baton = state.batons[state.batons.length - 1];
+      console.log(`\n── Session ${id} [${state.status}]`);
+      if (!baton) continue;
 
-program
-  .command("list")
-  .description("List all known tasks")
-  .option("--state-file <path>", "Path to state file", DEFAULT_STATE_PATH)
-  .action(async (opts: { stateFile: string }) => {
-    const ix = new Interchange({
-      stateBackend: new JSONFileBackend(opts.stateFile),
-    });
-    const tasks = ix.listTasks();
-    if (tasks.length === 0) {
-      console.log("No tasks found.");
-    } else {
-      for (const id of tasks) {
-        try {
-          const state = ix.getState(id);
-          console.log(`${id} [${state.status}] — ${state.originalTask.slice(0, 60)}`);
-        } catch {
-          console.log(`${id} [unknown]`);
+      if (Object.keys(baton.facts).length > 0) {
+        console.log("  Facts:");
+        for (const [k, v] of Object.entries(baton.facts)) {
+          console.log(`    ${k}: ${JSON.stringify(v)}`);
         }
+      }
+      if (baton.decisions.length > 0) {
+        console.log("  Decisions:");
+        for (const d of baton.decisions) {
+          console.log(`    • ${d.what} — ${d.why}`);
+        }
+      }
+      if (baton.triedAndRejected.length > 0) {
+        console.log("  Tried and rejected:");
+        for (const t of baton.triedAndRejected) {
+          console.log(`    ✗ ${t.what} — ${t.why}`);
+        }
+      }
+      if (baton.openQuestions.length > 0) {
+        console.log("  Open questions:");
+        for (const q of baton.openQuestions) {
+          console.log(`    ? ${q}`);
+        }
+      }
+      if (baton.nextSteps.length > 0) {
+        console.log("  Next steps:");
+        for (const s of baton.nextSteps) {
+          console.log(`    → ${s}`);
+        }
+      }
+      if (baton.recommendation) {
+        console.log(`  Bottom line: ${baton.recommendation}`);
       }
     }
   });
 
+// ─── handoff ─────────────────────────────────────────────────────────────────
+
 program
-  .command("roles")
-  .description("List available roles and their models")
-  .action(() => {
-    for (const [name, role] of Object.entries(DEFAULT_ROLES)) {
-      console.log(`${name}:`);
-      console.log(`  preferred: ${role.preferredModel}`);
-      console.log(`  fallback:  ${role.fallbackModel}`);
-      console.log(`  capabilities: ${role.capabilities.join(", ")}`);
+  .command("handoff [target]")
+  .description(
+    "Print baton formatted for a target agent (claude, codex, gemini, amp)"
+  )
+  .option("--dir <path>", "Project directory", process.cwd())
+  .option("--session <id>", "Session ID (default: latest)")
+  .action(
+    (
+      target: string | undefined,
+      opts: { dir: string; session?: string }
+    ) => {
+      const stateFile = getStateFile(opts.dir);
+      if (!existsSync(stateFile)) {
+        console.error("No interchange state found.");
+        process.exit(1);
+      }
+      const manager = new StateManager(new JSONFileBackend(stateFile));
+      const sessions = manager.listTasks();
+      if (sessions.length === 0) {
+        console.error("No sessions recorded yet.");
+        process.exit(1);
+      }
+      const sessionId = opts.session ?? sessions[sessions.length - 1]!;
+      const state = manager.get(sessionId);
+      const baton = state.batons[state.batons.length - 1];
+      if (!baton) {
+        console.error("No baton found for this session.");
+        process.exit(1);
+      }
+      console.log(formatBatonForAgent(baton, (target as AgentTarget) ?? "generic"));
+    }
+  );
+
+// ─── conflicts ───────────────────────────────────────────────────────────────
+
+program
+  .command("conflicts")
+  .description("Show detected fact conflicts across sessions")
+  .option("--dir <path>", "Project directory", process.cwd())
+  .action((opts: { dir: string }) => {
+    const stateFile = getStateFile(opts.dir);
+    if (!existsSync(stateFile)) {
+      console.log("No interchange state found.");
+      return;
+    }
+    const manager = new StateManager(new JSONFileBackend(stateFile));
+    const allFacts: Record<
+      string,
+      Array<{ sessionId: string; value: unknown }>
+    > = {};
+    for (const id of manager.listTasks()) {
+      const state = manager.get(id);
+      for (const [k, v] of Object.entries(state.facts)) {
+        if (!allFacts[k]) allFacts[k] = [];
+        allFacts[k]!.push({ sessionId: id, value: v });
+      }
+    }
+    const conflicts = Object.entries(allFacts).filter(
+      ([, vals]) =>
+        new Set(vals.map((v) => JSON.stringify(v.value))).size > 1
+    );
+    if (conflicts.length === 0) {
+      console.log("No conflicts detected.");
+      return;
+    }
+    console.log(`Found ${conflicts.length} conflict(s):\n`);
+    for (const [key, values] of conflicts) {
+      console.log(`  ${key}:`);
+      for (const { sessionId, value } of values) {
+        console.log(`    [${sessionId}] ${JSON.stringify(value)}`);
+      }
     }
   });
 
-function printResult(result: {
-  taskId: string;
-  status: string;
-  output: string;
-  totalTokens: number;
-  wallTimeMs: number;
-  taskNodes: Array<{ id: string; status: string; role: string }>;
-}): void {
-  console.log(`\n─── Result ───────────────────────────────────────────`);
-  console.log(`Status: ${result.status}`);
-  console.log(`Tokens: ${result.totalTokens.toLocaleString()}`);
-  console.log(`Time:   ${(result.wallTimeMs / 1000).toFixed(1)}s`);
-  console.log(`Nodes:  ${result.taskNodes.map((n) => `${n.id}[${n.status}]`).join(", ")}`);
-  if (result.output) {
-    console.log(`\n${result.output}`);
-  }
-}
+// ─── distill-hook ─────────────────────────────────────────────────────────────
+
+program
+  .command("distill-hook")
+  .description("Internal: Claude Code Stop hook handler (reads StopEvent from stdin)")
+  .option("--dir <path>", "Project directory", process.cwd())
+  .option("--model <id>", "Model to use for distillation")
+  .action(async (opts: { dir: string; model?: string }) => {
+    let input = "";
+    process.stdin.setEncoding("utf8");
+    for await (const chunk of process.stdin) {
+      input += chunk as string;
+    }
+    const event = JSON.parse(input) as StopEvent;
+    await handleStopHook(event, opts.dir, opts.model);
+  });
+
+// ─── serve ────────────────────────────────────────────────────────────────────
+
+program
+  .command("serve")
+  .description("Start interchange MCP server (stdio transport)")
+  .option("--dir <path>", "Project directory", process.cwd())
+  .action(async (opts: { dir: string }) => {
+    await startMcpServer(opts.dir);
+  });
 
 program.parse(process.argv);

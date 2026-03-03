@@ -28,15 +28,12 @@ export type {
   // Translation types
   TranslationResult,
   DroppedItem,
-  // Interchange orchestrator types
+  // Interchange handoff types
+  BatonDecision,
   ToolCall,
   Baton,
   TaskNode,
   WorldState,
-  Role,
-  RouteDecision,
-  RouteConstraints,
-  InterchangeResult,
 } from "./types.js";
 
 // ─── Exceptions ───────────────────────────────────────────────────────────────
