@@ -4,7 +4,7 @@
 [![npm](https://img.shields.io/npm/v/interchange)](https://www.npmjs.com/package/interchange)
 [![npm](https://img.shields.io/npm/v/%40npow%2Finterchange-core)](https://www.npmjs.com/package/@npow/interchange-core)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
-[![Node.js 22+](https://img.shields.io/badge/node-22+-blue.svg)](https://nodejs.org/)
+[![Node.js 22+](https://img.shields.io/badge/node-22+-blue.svg)](https://nodejs.org/) [![Docs](https://img.shields.io/badge/docs-mintlify-18a34a?style=flat-square)](https://mintlify.com/npow/interchange)
 
 Route each step of a multi-agent task to the right AI model automatically.
 
